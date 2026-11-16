@@ -184,7 +184,7 @@ private fun SoundCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
                     Icon(
                         painter = painterResource(R.drawable.ic_reset),
                         contentDescription = "Reset EQ",
-                        tint = if (state.link == LinkState.Ready) accent else TextDim,
+                        tint = TextDim,
                     )
                 }
             }
@@ -224,8 +224,7 @@ private fun SoundCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
             onCommit = vm::commitBands,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 10.dp)
-                .height(120.dp),
+                .height(140.dp),
         )
 
         Spacer(Modifier.height(6.dp))

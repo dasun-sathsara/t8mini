@@ -3,7 +3,6 @@ package dev.dasun.t8mini.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -19,6 +18,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
@@ -39,17 +39,19 @@ fun EqCurve(
     val current by rememberUpdatedState(bands)
     var dragging by remember { mutableIntStateOf(-1) }
 
-    fun valueAt(y: Float, height: Float): Int =
-        (255f * (1f - (y / height).coerceIn(0f, 1f))).roundToInt().coerceIn(0, 255)
+    fun valueAt(y: Float, height: Float, inset: Float): Int =
+        (255f * (1f - ((y - inset) / (height - 2 * inset)).coerceIn(0f, 1f))).roundToInt().coerceIn(0, 255)
 
     Canvas(
         modifier.pointerInput(Unit) {
             awaitEachGesture {
                 val down = awaitFirstDown(requireUnconsumed = false)
+                val horizontalInset = 24.dp.toPx()
+                val verticalInset = 10.dp.toPx()
                 val nodes = current.mapIndexed { index, value ->
                     Offset(
-                        x = size.width * index / 4f,
-                        y = size.height - (value / 255f) * size.height,
+                        x = horizontalInset + (size.width - 2 * horizontalInset) * index / 4f,
+                        y = verticalInset + (1f - value / 255f) * (size.height - 2 * verticalInset),
                     )
                 }
                 // Only steal the gesture when it starts on a node; anywhere else
@@ -59,19 +61,24 @@ fun EqCurve(
                 }
                 if (hit < 0) return@awaitEachGesture
 
+                down.consume()
                 dragging = hit
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 var latest = current
                 var moved = false
 
-                drag(down.id) { change ->
-                    moved = true
-                    val next = latest.toMutableList()
-                    next[hit] = valueAt(change.position.y, size.height.toFloat())
-                    latest = next
-                    onChange(next)
+                do {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                    if (change.pressed && change.position != change.previousPosition) {
+                        moved = true
+                        val next = latest.toMutableList()
+                        next[hit] = valueAt(change.position.y, size.height.toFloat(), verticalInset)
+                        latest = next
+                        onChange(next)
+                    }
                     change.consume()
-                }
+                } while (change.pressed)
 
                 dragging = -1
                 if (moved) {
@@ -83,27 +90,29 @@ fun EqCurve(
     ) {
         val width = size.width
         val height = size.height
+        val horizontalInset = 24.dp.toPx()
+        val verticalInset = 10.dp.toPx()
         val points = current.mapIndexed { index, value ->
             Offset(
-                x = width * index / 4f,
-                y = height - (value / 255f) * height,
+                x = horizontalInset + (width - 2 * horizontalInset) * index / 4f,
+                y = verticalInset + (1f - value / 255f) * (height - 2 * verticalInset),
             )
         }
 
         // grid
         for (index in 0..4) {
-            val x = width * index / 4f
+            val x = horizontalInset + (width - 2 * horizontalInset) * index / 4f
             drawLine(
                 color = Color.White.copy(alpha = 0.05f),
-                start = Offset(x, 0f),
-                end = Offset(x, height),
+                start = Offset(x, verticalInset),
+                end = Offset(x, height - verticalInset),
                 strokeWidth = 1.dp.toPx(),
             )
         }
         drawLine(
             color = Color.White.copy(alpha = 0.07f),
-            start = Offset(0f, height / 2f),
-            end = Offset(width, height / 2f),
+            start = Offset(horizontalInset, height / 2f),
+            end = Offset(width - horizontalInset, height / 2f),
             strokeWidth = 1.dp.toPx(),
         )
 
@@ -119,8 +128,8 @@ fun EqCurve(
 
         val fill = Path().apply {
             addPath(curve)
-            lineTo(width, height)
-            lineTo(0f, height)
+            lineTo(width - horizontalInset, height - verticalInset)
+            lineTo(horizontalInset, height - verticalInset)
             close()
         }
 
