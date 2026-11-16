@@ -21,6 +21,8 @@ class CurvesTest {
         val bands = Curves.podcast
         assertTrue(bands[0] < 128, "60 Hz should be trimmed")
         assertTrue(bands[3] > 128, "3.6 kHz should be lifted")
+        assertEquals(128, bands[2], "900 Hz should remain neutral")
+        assertEquals(128, bands[4], "14 kHz should remain neutral")
         assertTrue(bands.all { it in 0..255 })
     }
 

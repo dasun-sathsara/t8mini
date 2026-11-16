@@ -20,4 +20,6 @@ For the Docker cloud sandbox workflow, run `./scripts/build.sh` with `sbx` insta
 
 ## Limitations
 
-Battery level and power-off control are unavailable. AUX and TF card switching and stereo pairing have not been verified on hardware. The Podcast curve is a starting point for speech; the speaker's EQ gain scale is unknown.
+Battery level and power-off control are unavailable. AUX and TF card switching and stereo pairing have not been verified on hardware. The Podcast curve is a starting point for speech; the speaker's EQ gain scale and filter widths are unknown. Adjust it by ear.
+
+The curve reduces the two lowest bands, keeps the middle and highest bands neutral, and raises the 3.6 kHz band. Speech research shows that midrange and higher-frequency cues both contribute to intelligibility, but it does not establish an optimal setting for this speaker. See the studies on [band importance in speech-in-speech recognition](https://pmc.ncbi.nlm.nih.gov/articles/PMC11335358/) and [speech recognition across frequency bands](https://pmc.ncbi.nlm.nih.gov/articles/PMC6909976/).

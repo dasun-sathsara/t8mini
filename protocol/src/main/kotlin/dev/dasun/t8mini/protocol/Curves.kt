@@ -13,12 +13,12 @@ object Curves {
     /**
      * Speech clarity.
      *
-     * Rumble below 100 Hz carries nothing but handling noise and proximity
-     * boom, the 200-400 Hz octave is where voices turn muddy, 2-5 kHz is where
-     * intelligibility lives, and sibilance sits above 5 kHz. So: trim the two
-     * low bands, hold the mid, lift 3.6 kHz, and ease the top a little.
+     * A speech starting point: reduce low-frequency energy, preserve
+     * the midrange and upper treble, and raise the presence band.
+     * The speaker's filter widths and gain scale are unknown, so these raw
+     * values are a listening starting point, not measured gain in decibels.
      */
-    val podcast = listOf(96, 104, 128, 160, 104)
+    val podcast = listOf(80, 104, 128, 144, 128)
 
     fun matchesPodcast(bands: List<Int>): Boolean =
         bands.size == podcast.size && bands.zip(podcast).all { (a, b) -> kotlin.math.abs(a - b) <= 2 }
