@@ -50,8 +50,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,7 +116,7 @@ fun SpeakerScreen(vm: SpeakerViewModel) {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(210.dp)
                     .padding(horizontal = 40.dp, vertical = 4.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -134,7 +132,7 @@ fun SpeakerScreen(vm: SpeakerViewModel) {
                     ledOn = state.ledOn,
                     mode = state.ledMode,
                     connected = ready,
-                    modifier = Modifier.size(142.dp),
+                    modifier = Modifier.size(202.dp),
                 )
             }
 
@@ -157,7 +155,7 @@ fun SpeakerScreen(vm: SpeakerViewModel) {
 
                 Spacer(Modifier.height(12.dp))
 
-                LightCard(state = state, accent = accent, vm = vm)
+                LightCard(state = state, vm = vm)
 
                 Spacer(Modifier.height(12.dp))
 
@@ -173,46 +171,47 @@ fun SpeakerScreen(vm: SpeakerViewModel) {
 private fun SoundCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) {
     val podcastActive = state.customEq && Curves.matchesPodcast(state.bands)
 
-    SectionCard(
-        trailing = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (state.customEq && !podcastActive) {
-                    Text("CUSTOM", style = MaterialTheme.typography.labelSmall, color = accent)
-                } else if (!state.customEq && state.eqPreset !in listOf(EqPreset.DEFAULT, EqPreset.SOUND_PULSE)) {
-                    Text(state.eqPreset.label, style = MaterialTheme.typography.labelSmall, color = accent)
-                }
-                IconButton(onClick = vm::resetEq, enabled = state.link == LinkState.Ready) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_reset),
-                        contentDescription = "Reset EQ",
-                        tint = TextDim,
-                    )
-                }
+    SectionCard {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Pill(
+                    text = "Default",
+                    selected = !state.customEq && state.eqPreset == EqPreset.DEFAULT,
+                    accent = accent,
+                    onClick = { vm.setPreset(EqPreset.DEFAULT) },
+                )
+                Pill(
+                    text = "Podcast",
+                    selected = podcastActive,
+                    accent = accent,
+                    onClick = vm::setPodcast,
+                )
+                Pill(
+                    text = "SoundPulse",
+                    selected = !state.customEq && state.eqPreset == EqPreset.SOUND_PULSE,
+                    accent = accent,
+                    onClick = { vm.setPreset(EqPreset.SOUND_PULSE) },
+                )
             }
-        },
-    ) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Pill(
-                text = "Default",
-                selected = !state.customEq && state.eqPreset == EqPreset.DEFAULT,
-                accent = accent,
-                onClick = { vm.setPreset(EqPreset.DEFAULT) },
-            )
-            Pill(
-                text = "Podcast",
-                selected = podcastActive,
-                accent = accent,
-                onClick = vm::setPodcast,
-            )
-            Pill(
-                text = "SoundPulse",
-                selected = !state.customEq && state.eqPreset == EqPreset.SOUND_PULSE,
-                accent = accent,
-                onClick = { vm.setPreset(EqPreset.SOUND_PULSE) },
+            IconButton(onClick = vm::resetEq, enabled = state.link == LinkState.Ready) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_reset),
+                    contentDescription = "Reset EQ",
+                    tint = TextDim,
+                )
+            }
+        }
+
+        if (!state.customEq && state.eqPreset !in listOf(EqPreset.DEFAULT, EqPreset.SOUND_PULSE)) {
+            Text(
+                state.eqPreset.label,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextDim,
             )
         }
 
@@ -304,22 +303,8 @@ private fun TimerCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
 }
 
 @Composable
-private fun LightCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) {
-    SectionCard(
-        trailing = {
-            Switch(
-                modifier = Modifier.semantics { contentDescription = "Light" },
-                checked = state.ledOn,
-                onCheckedChange = vm::setLed,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = accent,
-                    uncheckedTrackColor = Surface2,
-                    uncheckedBorderColor = Line,
-                ),
-            )
-        },
-    ) {
+private fun LightCard(state: SpeakerState, vm: SpeakerViewModel) {
+    SectionCard {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             LedMode.entries.forEach { mode ->
                 ModeTile(
@@ -425,7 +410,6 @@ private fun Header(state: SpeakerState, accent: Color, onConnect: () -> Unit) {
 
 @Composable
 private fun SectionCard(
-    trailing: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -436,12 +420,6 @@ private fun SectionCard(
             .border(1.dp, Line, RoundedCornerShape(26.dp))
             .padding(18.dp),
     ) {
-        if (trailing != null) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                trailing()
-            }
-            Spacer(Modifier.height(14.dp))
-        }
         content()
     }
 }
