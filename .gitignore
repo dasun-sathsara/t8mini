@@ -1,0 +1,12 @@
+# Build output
+build/
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# macOS
+.DS_Store
+
+# Licensed typefaces, copied from the private font library (see README)
+app/src/main/res/font/*.ttf
