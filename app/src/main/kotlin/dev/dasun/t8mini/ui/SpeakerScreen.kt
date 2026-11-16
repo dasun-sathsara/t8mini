@@ -50,6 +50,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -172,7 +174,6 @@ private fun SoundCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
     val podcastActive = state.customEq && Curves.matchesPodcast(state.bands)
 
     SectionCard(
-        title = "Sound",
         trailing = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (state.customEq && !podcastActive) {
@@ -248,7 +249,7 @@ private fun SoundCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
 private fun TimerCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) {
     val armed = state.timerRemainingSeconds > 0
 
-    SectionCard(title = "Auto power-off") {
+    SectionCard {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
@@ -305,9 +306,9 @@ private fun TimerCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
 @Composable
 private fun LightCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) {
     SectionCard(
-        title = "Light",
         trailing = {
             Switch(
+                modifier = Modifier.semantics { contentDescription = "Light" },
                 checked = state.ledOn,
                 onCheckedChange = vm::setLed,
                 colors = SwitchDefaults.colors(
@@ -336,7 +337,7 @@ private fun LightCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) 
 
 @Composable
 private fun SpeakerCard(state: SpeakerState, accent: Color, vm: SpeakerViewModel) {
-    SectionCard(title = "Speaker") {
+    SectionCard {
         ToggleRow(
             label = "Voice prompt",
             detail = "Beeps and spoken confirmations",
@@ -424,7 +425,6 @@ private fun Header(state: SpeakerState, accent: Color, onConnect: () -> Unit) {
 
 @Composable
 private fun SectionCard(
-    title: String,
     trailing: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -436,18 +436,12 @@ private fun SectionCard(
             .border(1.dp, Line, RoundedCornerShape(26.dp))
             .padding(18.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = title.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextDim,
-            )
-            if (trailing != null) {
-                Spacer(Modifier.weight(1f))
+        if (trailing != null) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 trailing()
             }
+            Spacer(Modifier.height(14.dp))
         }
-        Spacer(Modifier.height(14.dp))
         content()
     }
 }
